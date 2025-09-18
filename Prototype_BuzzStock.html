@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BuzzStock — 移动App高保真原型（单文件）</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #F8F4F0;
+            /* 主背景 */
+            --text: #4A4A4A;
+            /* 主文字 */
+            --muted: #888888;
+            /* 次要文字 */
+            --accent: #FF7F50;
+            /* 强调色 */
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.25);
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            background: var(--bg);
+            font-family: 'Poppins', 'Roboto', 'Noto Sans SC', 'Source Han Sans SC', system-ui, -apple-system, Segoe UI, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            margin: 0;
+        }
+
+        .page-title {
+            font-size: 30px;
+            font-weight: 700;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .text-body {
+            font-size: 16px;
+            font-weight: 400;
+        }
+
+        .text-small {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--muted);
+        }
+
+        /* 布局：每行6个画板 */
+        .canvas {
+            width: 100%;
+            max-width: 2560px;
+            margin: 24px auto;
+            padding: 0 16px 32px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(6, 375px);
+            gap: 24px;
+            justify-content: center;
+        }
+
+        @media (max-width: 2400px) {
+            .grid {
+                grid-template-columns: repeat(5, 375px);
+            }
+        }
+
+        @media (max-width: 2000px) {
+            .grid {
+                grid-template-columns: repeat(4, 375px);
+            }
+        }
+
+        @media (max-width: 1600px) {
+            .grid {
+                grid-template-columns: repeat(3, 375px);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .grid {
+                grid-template-columns: repeat(2, 375px);
+            }
+        }
+
+        @media (max-width: 820px) {
+            .grid {
+                grid-template-columns: repeat(1, 375px);
+            }
+        }
+
+        /* 画板（手机屏幕 375x812）*/
+        .phone {
+            width: 375px;
+            height: 812px;
+            position: relative;
+            border: 1px solid #CCCCCC;
+            border-radius: 32px;
+            overflow: hidden;
+            background: radial-gradient(1200px 700px at -10% -10%, #ffffff 0%, #faf7f3 40%, #f4efe9 100%);
+        }
+
+        .phone .safe {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 12px;
+        }
+
+        /* 玻璃拟态容器 */
+        .glass {
+            background-color: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+        }
+
+        .glass.soft {
+            border-radius: var(--radius-lg);
+        }
+
+        .glass.sm {
+            border-radius: var(--radius-md);
+        }
+
+        .glass.borderless {
+            border: 0;
+        }
+
+        /* 卡片与悬浮动效 */
+        .card {
+            padding: 16px;
+            transition: transform .25s ease, filter .25s ease;
+        }
+
+        .card.hoverable:hover {
+            transform: translateY(-4px);
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.12));
+        }
+
+        /* 呼吸按钮 */
+        @keyframes breathe {
+            0% {
+                box-shadow: 0 6px 16px rgba(255, 127, 80, 0.18);
+            }
+
+            50% {
+                box-shadow: 0 10px 28px rgba(255, 127, 80, 0.32);
+            }
+
+            100% {
+                box-shadow: 0 6px 16px rgba(255, 127, 80, 0.18);
+            }
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 16px;
+            border: none;
+            cursor: pointer;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: transform .08s ease, opacity .08s ease;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+            opacity: .85;
+        }
+
+        .btn-accent {
+            color: #fff;
+            background: var(--accent);
+            animation: breathe 2.6s ease-in-out infinite;
+        }
+
+        .btn-ghost {
+            color: var(--text);
+            background: rgba(255, 255, 255, 0.85);
+        }
+
+        .btn-outline {
+            color: var(--accent);
+            background: transparent;
+            border: 1px solid rgba(255, 127, 80, 0.45);
+        }
+
+        /* 输入与表单 */
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input,
+        .select,
+        .textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            color: var(--text);
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #FFFFFF;
+            transition: box-shadow .15s ease, background .15s ease;
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 72px;
+        }
+
+        .input:focus,
+        .select:focus,
+        .textarea:focus {
+            box-shadow: 0 0 0 3px rgba(255, 127, 80, 0.25);
+        }
+
+        /* 顶部栏与底部导航 */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .nav {
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            padding: 10px;
+            border-radius: 20px;
+        }
+
+        .nav a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 6px;
+            border-radius: 12px;
+            transition: background .2s ease, color .2s ease;
+        }
+
+        .nav a.active {
+            color: var(--accent);
+            background: rgba(255, 127, 80, 0.08);
+        }
+
+        .nav a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .toolbar-space {
+            height: 68px;
+        }
+
+        /* 列表与行 */
+        .list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .row .left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .row .right {
+            text-align: right;
+        }
+
+        .avatar,
+        .iconbox {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ffe1d6, #ffd1bd);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .chip {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(255, 127, 80, 0.10);
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        /* 卡片占位图与K线 */
+        .img-ph {
+            width: 100%;
+            height: 120px;
+            border-radius: 12px;
+            background: repeating-linear-gradient(135deg, #f7efe8, #f7efe8 10px, #f2e6dc 10px, #f2e6dc 20px);
+        }
+
+        .kline-ph {
+            width: 100%;
+            height: 180px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #fff, #f4efe9);
+            position: relative;
+        }
+
+        .kline-ph::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(transparent, transparent),
+                linear-gradient(#eee 1px, transparent 1px);
+            background-size: 100% 100%, 100% 24px;
+            opacity: .8;
+            mix-blend-mode: multiply;
+            border-radius: 12px;
+        }
+
+        /* SVG 折线图动画 */
+        .progress-chart {
+            width: 100%;
+            height: 140px;
+        }
+
+        .progress-chart svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .path-anim {
+            stroke-dasharray: 800;
+            stroke-dashoffset: 800;
+            animation: draw 1.8s ease forwards;
+        }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* 提示条/Alert */
+        .alert {
+            padding: 12px 14px;
+            border-radius: 12px;
+            color: #7a4b35;
+            background: #ffe8de;
+            border: 1px solid #ffd8c8;
+        }
+
+        /* 页头描述 */
+        .board-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 2px 8px;
+        }
+
+        .board-meta .badge {
+            font-size: 12px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.05);
+            color: #666;
+        }
+
+        /* 小图标统一 */
+        svg.icon {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SVG 图标精灵：通过 <use xlink:href="#icon-xxx"> 使用，颜色继承 currentColor -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+        <symbol id="icon-home" viewBox="0 0 24 24">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+        </symbol>
+        <symbol id="icon-target" viewBox="0 0 24 24">
+            <path
+                d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm0-3a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+        </symbol>
+        <symbol id="icon-quote" viewBox="0 0 24 24">
+            <path
+                d="M7 7h5v5H9a3 3 0 0 0-3 3v2H3v-2a6 6 0 0 1 6-6V7zm10 0h5v5h-3a3 3 0 0 0-3 3v2h-3v-2a6 6 0 0 1 6-6V7z" />
+        </symbol>
+        <symbol id="icon-image" viewBox="0 0 24 24">
+            <path
+                d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM8.5 11.5L11 14l3.5-4.5L19 17H5l3.5-5.5zM8 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+        </symbol>
+        <symbol id="icon-journal" viewBox="0 0 24 24">
+            <path
+                d="M6 2h9a3 3 0 0 1 3 3v15a2 2 0 0 1-2 2H6a4 4 0 0 1-4-4V6a4 4 0 0 1 4-4zm0 4v12a2 2 0 0 0 2 2h8V5a1 1 0 0 0-1-1H6a1 1 0 0 0 0 2z" />
+        </symbol>
+        <symbol id="icon-settings" viewBox="0 0 24 24">
+            <path
+                d="M19.14 12.94a7.07 7.07 0 0 0 .05-.94 7.07 7.07 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.03 7.03 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 12.9 1h-3.8a.5.5 0 0 0-.5.43l-.36 2.54c-.58.22-1.12.52-1.63.94l-2.39-.96a.5.5 0 0 0-.6.22L1.7 7.03a.5.5 0 0 0 .12.64l2.03 1.58c-.03.31-.05.63-.05.94s.02.63.05.94L1.82 12.7a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.31.6.22l2.39-.96c.51.42 1.05.72 1.63.94l.36 2.54c.03.25.25.43.5.43h3.8c.25 0 .46-.18.5-.43l.36-2.54c.58-.22 1.12-.52 1.63-.94l2.39.96c.22.09.47 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58zM11 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8z" />
+        </symbol>
+        <symbol id="icon-add" viewBox="0 0 24 24">
+            <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
+        </symbol>
+        <symbol id="icon-check" viewBox="0 0 24 24">
+            <path d="M9 16.2l-3.5-3.5L4 14.2l5 5 12-12-1.4-1.4z" />
+        </symbol>
+        <symbol id="icon-arrow-right" viewBox="0 0 24 24">
+            <path d="M10 17l5-5-5-5v10z" />
+        </symbol>
+        <symbol id="icon-search" viewBox="0 0 24 24">
+            <path
+                d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16a6.471 6.471 0 0 0 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z" />
+        </symbol>
+        <symbol id="icon-edit" viewBox="0 0 24 24">
+            <path
+                d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z" />
+        </symbol>
+        <symbol id="icon-delete" viewBox="0 0 24 24">
+            <path d="M6 7h12v2H6V7zm2 3h8l-1 10H9L8 10zm3-5h2l1 1h5v2H5V6h5l1-1z" />
+        </symbol>
+        <symbol id="icon-play" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+        </symbol>
+        <symbol id="icon-wallet" viewBox="0 0 24 24">
+            <path
+                d="M2 7a3 3 0 0 1 3-3h12v2H5a1 1 0 0 0-1 1v1h16a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7zM20 11H4v7h16v-7z" />
+        </symbol>
+        <symbol id="icon-chart" viewBox="0 0 24 24">
+            <path d="M3 3h2v18H3V3zm4 8h2v10H7V11zm4-6h2v16h-2V5zm4 10h2v6h-2v-6zm4-8h2v14h-2V7z" />
+        </symbol>
+        <symbol id="icon-bell" viewBox="0 0 24 24">
+            <path
+                d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2zm6-6V11a6 6 0 0 0-5-5.91V4a1 1 0 0 0-2 0v1.09A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2z" />
+        </symbol>
+        <symbol id="icon-user" viewBox="0 0 24 24">
+            <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-5.33 0-8 2.67-8 6h16c0-3.33-2.67-6-8-6z" />
+        </symbol>
+        <symbol id="icon-star" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        </symbol>
+        <symbol id="icon-filter" viewBox="0 0 24 24">
+            <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
+        </symbol>
+        <symbol id="icon-arrow-left" viewBox="0 0 24 24">
+            <path d="M15 6l-6 6 6 6V6z" />
+        </symbol>
+        <symbol id="icon-send" viewBox="0 0 24 24">
+            <path d="M2 21l21-9L2 3v7l15 2-15 2v7z" />
+        </symbol>
+        <symbol id="icon-receive" viewBox="0 0 24 24">
+            <path d="M4 4h16v2H4zM12 20l6-6h-4V8h-4v6H6z" />
+        </symbol>
+    </svg>
+
+    <div class="canvas">
+        <div class="board-meta">
+            <div class="page-title">BuzzStock — 移动端UI原型画板</div>
+            <div class="badge">单文件 · 玻璃拟态 · 低饱和配色 · 6列网格</div>
+        </div>
+        <div class="grid">
+
+            <!-- 1 欢迎/启动页 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="glass card hoverable" style="padding:24px; margin-top:24px; text-align:center">
+                        <div class="avatar" style="width:64px;height:64px;margin:0 auto 12px;border-radius:18px;">
+                            <svg class="icon">
+                                <use xlink:href="#icon-star"></use>
+                            </svg>
+                        </div>
+                        <div class="page-title" style="margin-bottom:8px;">BuzzStock</div>
+                        <div class="text-small" style="margin-bottom:16px;">去中心化钱包 · 股票代币化交易</div>
+                        <button class="btn btn-accent" style="width:100%">立即开始 <svg class="icon">
+                                <use xlink:href="#icon-arrow-right"></use>
+                            </svg></button>
+                    </div>
+                    <div class="glass card hoverable" style="margin-top:auto">
+                        <div class="row">
+                            <div class="left">
+                                <div class="iconbox"><svg class="icon">
+                                        <use xlink:href="#icon-quote"></use>
+                                    </svg></div>
+                                <div>
+                                    <div class="card-title">愿景</div>
+                                    <div class="text-small">连接传统金融与Web3的自由之桥</div>
+                                </div>
+                            </div>
+                            <div class="chip">安全非托管</div>
+                        </div>
+                    </div>
+                    <div class="nav glass">
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2 首页/市场看板 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">市场看板</div>
+                        <div class="row" style="gap:8px;">
+                            <div class="iconbox" style="width:36px;height:36px;"><svg class="icon">
+                                    <use xlink:href="#icon-bell"></use>
+                                </svg></div>
+                            <div class="iconbox" style="width:36px;height:36px;"><svg class="icon">
+                                    <use xlink:href="#icon-search"></use>
+                                </svg></div>
+                        </div>
+                    </div>
+
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div>
+                                <div class="card-title">总资产 (USD)</div>
+                                <div style="font-size:28px;font-weight:700;">$128,450.12</div>
+                                <div class="text-small">24h +3.2%</div>
+                            </div>
+                            <div class="img-ph" style="width:140px;height:80px;border-radius:12px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="text-small">热门股票代币</div>
+                    <div class="list">
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">A</div>
+                                    <div>
+                                        <div class="card-title">AAPL</div>
+                                        <div class="text-small">苹果公司</div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <div style="font-weight:700;">$229.41</div>
+                                    <div class="text-small" style="color:#1a7f37;">+1.84%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">T</div>
+                                    <div>
+                                        <div class="card-title">TSLA</div>
+                                        <div class="text-small">特斯拉</div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <div style="font-weight:700;">$254.20</div>
+                                    <div class="text-small" style="color:#c22727;">-0.62%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3 钱包资产页 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">我的钱包</div>
+                        <div class="chip">非托管</div>
+                    </div>
+
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div>
+                                <div class="text-small">地址</div>
+                                <div style="font-weight:700;">0x12a4...cD9F</div>
+                            </div>
+                            <div class="row" style="gap:8px;">
+                                <button class="btn btn-ghost"><svg class="icon">
+                                        <use xlink:href="#icon-send"></use>
+                                    </svg>转账</button>
+                                <button class="btn btn-outline"><svg class="icon">
+                                        <use xlink:href="#icon-receive"></use>
+                                    </svg>收款</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-small">资产</div>
+                    <div class="list">
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">E</div>
+                                    <div>ETH</div>
+                                </div>
+                                <div class="right">
+                                    <div>0.824</div>
+                                    <div class="text-small">$2,560.31</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">U</div>
+                                    <div>USDC</div>
+                                </div>
+                                <div class="right">
+                                    <div>1,250.00</div>
+                                    <div class="text-small">$1,250.00</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">A</div>
+                                    <div>AAPL-PERP</div>
+                                </div>
+                                <div class="right">
+                                    <div>12.5</div>
+                                    <div class="text-small">$2,867.6</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4 代币详情页 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="row" style="gap:10px; align-items:center;">
+                            <svg class="icon">
+                                <use xlink:href="#icon-arrow-left"></use>
+                            </svg>
+                            <div class="title">AAPL-PERP</div>
+                        </div>
+                        <div class="chip">+1.84%</div>
+                    </div>
+
+                    <div class="glass card">
+                        <div class="kline-ph"></div>
+                        <div class="row" style="margin-top:12px;">
+                            <div class="chip">1H</div>
+                            <div class="chip" style="background:rgba(255,127,80,0.16); color:var(--accent);">1D</div>
+                            <div class="chip">1W</div>
+                            <div class="chip">1M</div>
+                        </div>
+                    </div>
+
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="left">
+                                <div>
+                                    <div class="text-small">价格</div>
+                                    <div style="font-weight:700; font-size:22px;">$229.41</div>
+                                </div>
+                            </div>
+                            <div class="right">
+                                <div class="text-small">资金费率</div>
+                                <div style="font-weight:600; color:#1a7f37;">+0.015%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="gap:10px;">
+                        <button class="btn btn-accent" style="flex:1;">买入</button>
+                        <button class="btn btn-ghost" style="flex:1;">卖出</button>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5 搜索/发现页 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">发现</div>
+                        <div class="iconbox" style="width:36px;height:36px;"><svg class="icon">
+                                <use xlink:href="#icon-filter"></use>
+                            </svg></div>
+                    </div>
+
+                    <div class="field">
+                        <input class="input" placeholder="搜索 AAPL, TSLA, ETH..." />
+                    </div>
+
+                    <div class="text-small">精选主题</div>
+                    <div class="list">
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="img-ph" style="width:76px;height:56px;"></div>
+                                    <div>
+                                        <div class="card-title">科技龙头</div>
+                                        <div class="text-small">AAPL · MSFT · NVDA</div>
+                                    </div>
+                                </div>
+                                <svg class="icon">
+                                    <use xlink:href="#icon-arrow-right"></use>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="img-ph" style="width:76px;height:56px;"></div>
+                                    <div>
+                                        <div class="card-title">新能源车</div>
+                                        <div class="text-small">TSLA · BYD</div>
+                                    </div>
+                                </div>
+                                <svg class="icon">
+                                    <use xlink:href="#icon-arrow-right"></use>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6 股票代币市场列表 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">股票代币</div>
+                        <div class="chip">Top 10</div>
+                    </div>
+
+                    <div class="list">
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">A</div>
+                                    <div>AAPL · 苹果</div>
+                                </div>
+                                <div class="right">
+                                    <div style="font-weight:700;">$229.41</div>
+                                    <div class="text-small" style="color:#1a7f37;">+1.84%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">M</div>
+                                    <div>MSFT · 微软</div>
+                                </div>
+                                <div class="right">
+                                    <div style="font-weight:700;">$418.02</div>
+                                    <div class="text-small" style="color:#1a7f37;">+0.54%</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="avatar">N</div>
+                                    <div>NVDA · 英伟达</div>
+                                </div>
+                                <div class="right">
+                                    <div style="font-weight:700;">$1,102.50</div>
+                                    <div class="text-small" style="color:#c22727;">-0.73%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7 交易详情页（含K线） -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">AAPL-PERP</div>
+                        <div class="row" style="gap:6px;">
+                            <div class="chip">1H</div>
+                            <div class="chip" style="background:rgba(255,127,80,0.16); color:var(--accent);">1D</div>
+                            <div class="chip">1W</div>
+                        </div>
+                    </div>
+                    <div class="glass card">
+                        <div class="kline-ph" style="height:220px;"></div>
+                    </div>
+                    <div class="row" style="gap:10px;">
+                        <button class="btn btn-accent" style="flex:1;">买入</button>
+                        <button class="btn btn-ghost" style="flex:1;">卖出</button>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="text-small">24h 量</div>
+                            <div class="text-small">$152M</div>
+                        </div>
+                    </div>
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 8 下单页（极简面板） -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">下单</div>
+                        <div class="chip">AAPL-PERP</div>
+                    </div>
+
+                    <div class="glass card">
+                        <div class="field">
+                            <label class="text-small">数量</label>
+                            <input class="input" placeholder="0.0">
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label class="text-small">杠杆</label>
+                            <input class="input" type="range" min="1" max="25" value="5">
+                            <div class="row text-small"><span>1x</span><span>25x</span></div>
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label class="text-small">保证金 (USDC)</label>
+                            <input class="input" placeholder="0.0">
+                        </div>
+                    </div>
+
+                    <div class="row" style="gap:10px;">
+                        <button class="btn btn-accent" style="flex:1;">买入做多</button>
+                        <button class="btn btn-ghost" style="flex:1;">卖出做空</button>
+                    </div>
+
+                    <div class="alert">下单前请确认价格、数量、手续费与Gas费信息。</div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9 订单列表 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">订单</div>
+                        <div class="row" style="gap:8px;">
+                            <div class="chip">全部</div>
+                            <div class="chip">进行中</div>
+                            <div class="chip">已完成</div>
+                        </div>
+                    </div>
+
+                    <div class="list">
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="iconbox"><svg class="icon">
+                                            <use xlink:href="#icon-journal"></use>
+                                        </svg></div>
+                                    <div>
+                                        <div class="card-title">AAPL-PERP · 买入</div>
+                                        <div class="text-small">数量 2.5 · 5x · 开仓 $228.50</div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <div class="text-small">成功</div>
+                                    <div class="text-small">10:21</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="glass card hoverable">
+                            <div class="row">
+                                <div class="left">
+                                    <div class="iconbox"><svg class="icon">
+                                            <use xlink:href="#icon-journal"></use>
+                                        </svg></div>
+                                    <div>
+                                        <div class="card-title">TSLA-PERP · 卖出</div>
+                                        <div class="text-small">数量 1.2 · 3x · 开仓 $255.10</div>
+                                    </div>
+                                </div>
+                                <div class="right">
+                                    <div class="text-small">进行中</div>
+                                    <div class="text-small">09:05</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 10 转账/收款 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">转账</div>
+                        <div class="chip">ETH</div>
+                    </div>
+
+                    <div class="glass card">
+                        <div class="field">
+                            <label class="text-small">接收地址</label>
+                            <input class="input" placeholder="0x...">
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label class="text-small">金额</label>
+                            <input class="input" placeholder="0.0">
+                        </div>
+                        <div class="field" style="margin-top:10px;">
+                            <label class="text-small">Gas 模式</label>
+                            <select class="select">
+                                <option>快</option>
+                                <option selected>中</option>
+                                <option>慢</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-accent" style="width:100%;">确认发送</button>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 11 设置 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">设置</div>
+                        <div class="chip">偏好</div>
+                    </div>
+
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div>主题</div>
+                            <div class="chip">浅色</div>
+                        </div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div>语言</div>
+                            <div class="chip">中文</div>
+                        </div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div>生物识别</div>
+                            <div class="chip">未开启</div>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 12 投资目标详情（包含动态折线图） -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">投资目标</div>
+                        <div class="chip">进度</div>
+                    </div>
+
+                    <div class="glass card">
+                        <div class="card-title" style="margin-bottom:4px;">AAPL 长期增持</div>
+                        <div class="text-small">目标 $10,000 · 已达成 $6,400</div>
+                        <div class="progress-chart" style="margin-top:10px;">
+                            <svg viewBox="0 0 300 120" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="gradLine" x1="0" x2="0" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#FF7F50" />
+                                        <stop offset="100%" stop-color="#FFB199" />
+                                    </linearGradient>
+                                </defs>
+                                <path d="M0,90 L40,80 L80,85 L120,70 L160,60 L200,58 L240,48 L280,40" fill="none"
+                                    stroke="url(#gradLine)" stroke-width="3" class="path-anim" />
+                                <path d="M0,110 L300,110" stroke="#eee" stroke-width="1" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="row" style="gap:10px;">
+                        <button class="btn btn-accent" style="flex:1;"><svg class="icon">
+                                <use xlink:href="#icon-add"></use>
+                            </svg>加仓</button>
+                        <button class="btn btn-ghost" style="flex:1;"><svg class="icon">
+                                <use xlink:href="#icon-edit"></use>
+                            </svg>编辑</button>
+                    </div>
+
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="left">
+                                <div class="iconbox"><svg class="icon">
+                                        <use xlink:href="#icon-check"></use>
+                                    </svg></div>
+                                <div>
+                                    <div class="card-title">里程碑</div>
+                                    <div class="text-small">每周定投 $200 · 已坚持 12 周</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline">详情</button>
+                        </div>
+                    </div>
+
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 13 市场榜单/数据洞察 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">市场洞察</div>
+                        <div class="chip">24h</div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="card-title">涨幅榜</div>
+                            <div class="text-small">Top 5</div>
+                        </div>
+                        <div class="list" style="margin-top:8px;">
+                            <div class="row"><span>AAPL</span><span style="color:#1a7f37;">+1.84%</span></div>
+                            <div class="row"><span>MSFT</span><span style="color:#1a7f37;">+0.92%</span></div>
+                            <div class="row"><span>AMZN</span><span style="color:#1a7f37;">+0.88%</span></div>
+                            <div class="row"><span>NVDA</span><span style="color:#c22727;">-0.12%</span></div>
+                        </div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="card-title">成交量榜</div>
+                            <div class="text-small">Top 5</div>
+                        </div>
+                        <div class="list" style="margin-top:8px;">
+                            <div class="row"><span>AAPL</span><span>$52M</span></div>
+                            <div class="row"><span>NVDA</span><span>$48M</span></div>
+                            <div class="row"><span>TSLA</span><span>$31M</span></div>
+                        </div>
+                    </div>
+                    <div class="nav glass">
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 14 钱包收款二维码（占位） -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">收款</div>
+                        <div class="chip">USDC</div>
+                    </div>
+                    <div class="glass card" style="text-align:center;">
+                        <div class="text-small">我的地址</div>
+                        <div style="font-weight:700;">0x12a4...cD9F</div>
+                        <div class="img-ph" style="height:200px; border-radius:16px; margin-top:12px;"></div>
+                        <button class="btn btn-ghost" style="margin-top:10px;">复制地址</button>
+                    </div>
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 15 社交/任务占位 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">任务与空投</div>
+                        <div class="chip">进行中</div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="left">
+                                <div class="iconbox"><svg class="icon">
+                                        <use xlink:href="#icon-play"></use>
+                                    </svg></div>
+                                <div>
+                                    <div class="card-title">完成首次交易</div>
+                                    <div class="text-small">奖励 50 积分</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-accent">去完成</button>
+                        </div>
+                    </div>
+                    <div class="glass card hoverable">
+                        <div class="row">
+                            <div class="left">
+                                <div class="iconbox"><svg class="icon">
+                                        <use xlink:href="#icon-star"></use>
+                                    </svg></div>
+                                <div>
+                                    <div class="card-title">邀请好友</div>
+                                    <div class="text-small">双方各得 20 积分</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-ghost">复制邀请</button>
+                        </div>
+                    </div>
+                    <div class="nav glass">
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 16 模态/确认操作演示 -->
+            <section class="phone">
+                <div class="safe">
+                    <div class="topbar">
+                        <div class="title">下单确认</div>
+                        <div class="chip">弹窗示例</div>
+                    </div>
+                    <div class="glass card">
+                        <div class="card-title" style="margin-bottom:6px;">AAPL-PERP 买入</div>
+                        <div class="text-small">数量 2.5 · 杠杆 5x · 预估手续费 $3.12</div>
+                        <div class="text-small" style="margin-top:4px;">Gas 费：中</div>
+                        <div class="row" style="gap:10px; margin-top:12px;">
+                            <button class="btn btn-ghost" style="flex:1;">取消</button>
+                            <button class="btn btn-accent" style="flex:1;">确认</button>
+                        </div>
+                    </div>
+                    <div class="nav glass">
+                        <a><svg>
+                                <use xlink:href="#icon-home"></use>
+                            </svg><span>首页</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-wallet"></use>
+                            </svg><span>钱包</span></a>
+                        <a class="active"><svg>
+                                <use xlink:href="#icon-chart"></use>
+                            </svg><span>市场</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-journal"></use>
+                            </svg><span>订单</span></a>
+                        <a><svg>
+                                <use xlink:href="#icon-settings"></use>
+                            </svg><span>设置</span></a>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        // 仅用于在加载后触发可能的动画类（当前CSS动画已自动执行，此处预留扩展）
+        window.addEventListener('load', () => {
+            // 可扩展：为可见画板延迟添加类名，分段播放动画
+        });
+    </script>
+</body>
+
+</html>
